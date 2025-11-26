@@ -1,9 +1,9 @@
 # if we are not running in /dev/tty0, skip animation
-# if [ "$(tty)" != "/dev/tty0" ]; then
-#     echo "Welcome to Rhodes Island Pass Debug Shell!"
-#     echo "You are in Terminal $(tty)."
-#     return
-# fi
+if [ "$(tty)" != "/dev/tty0" ]; then
+    echo "Welcome to Rhodes Island Pass Debug Shell!"
+    echo "You are in Terminal $(tty)."
+    return
+fi
 
 # if epass_drm_app is not present
 if [ ! -f "./epass_drm_app" ]; then
