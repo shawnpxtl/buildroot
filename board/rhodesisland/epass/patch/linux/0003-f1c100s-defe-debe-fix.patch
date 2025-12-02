@@ -664,11 +664,11 @@
 +  	// src_buf_addr.ch0_addr=(u32)buff_y;
 +	// src_buf_addr.ch1_addr=(u32)buff_c;
 +	// src_buf_addr.ch2_addr=0;
-+	src_size.src_width=352;
++	src_size.src_width=384;
 +	src_size.src_height=640;
 +	src_size.x_off=0;
 +	src_size.y_off=0;
-+	src_size.scal_width=352;
++	src_size.scal_width=384;
 +	src_size.scal_height=640;
 +	src_type.sample_method=0;
 +	src_type.byte_seq=D0D1D2D3;
@@ -682,11 +682,11 @@
 +	out_scan.bottom=0;//0:top field; 1:bottom field
 +	out_type.byte_seq=D3D2D1D0;//0:D0D1D2D3; 1:D3D2D1D0
 +	out_type.fmt=DE_SCAL_OUTI0RGB888;//0:plannar rgb888; 1: argb(byte0,byte1, byte2, byte3); 2:bgra; 4:yuv444; 5:yuv420; 6:yuv422; 7:yuv411
-+  	out_size.width=352;
++  	out_size.width=384;
 +  	out_size.height=640;//when ouput interlace enable,  the height is the 2x height of scale, for example, ouput is 480i, this value is 480
 +	out_size.x_off=0;
 +	out_size.y_off=0;
-+	out_size.fb_width=352;
++	out_size.fb_width=384;
 +	out_size.fb_height=640;				
 +
 +

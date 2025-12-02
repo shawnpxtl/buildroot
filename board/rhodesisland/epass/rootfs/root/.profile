@@ -22,9 +22,7 @@ to app directory.
 
 
 EOF
-
-    return
-fi
+else
 
 cat << EOF                                        
                       *                      
@@ -48,7 +46,6 @@ cat << EOF
   *.......................................- 
 
 EOF
-sleep 2
 cat << EOF
 ---------------------------------------------
      RHODES ISLAND AUTHORIZATION PASS
@@ -73,6 +70,9 @@ echo "You are in Terminal $(tty)."
 echo "Access Level: Operator"
 echo -n -e "\e[0m"
 echo ""
+chmod +x ./epass_drm_app
+./epass_drm_app version
+cat /etc/os-release
 echo -n "System initializing"
 for i in $(seq 1 5); do
     echo -n "."
@@ -83,5 +83,36 @@ echo "Starting Application..."
 sleep 1
 # echo 0 > /sys/class/vtconsole/vtcon1/bind
 # ./lvglsim
-chmod +x ./epass_drm_app
-./epass_drm_app
+./epass_drm_app > /dev/null
+fi
+
+cat << EOF
+ /##   /##  /######  /#######              
+| ##  | ## /##__  ##| ##__  ##             
+| ##  | ##| ##  \__/| ##  \ ##             
+| ##  | ##|  ###### | #######              
+| ##  | ## \____  ##| ##__  ##             
+| ##  | ## /##  \ ##| ##  \ ##             
+|  ######/|  ######/| #######/             
+ \______/  \______/ |_______/              
+
+To Download Assets,
+Connect Your Electric Pass Device via USB.
+Press any key to Reboot...
+
+
+EOF
+
+umtpctl start
+LAST_TIME=$(date +%s)
+while [ $? -eq 0 ]; do
+    read -n1
+    CURRENT_TIME=$(date +%s)
+    ELAPSED_TIME=$((CURRENT_TIME - LAST_TIME))
+    if [ $ELAPSED_TIME -ge 5 ]; then
+        echo "Triggered!"
+        break
+    fi
+done
+
+reboot

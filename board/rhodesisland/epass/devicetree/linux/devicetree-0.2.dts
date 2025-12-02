@@ -5,7 +5,7 @@
 #include <dt-bindings/input/input.h>
 
 / {
-	model = "Arknights_Electric_Pass";
+	model = "Arknights_Electric_Pass_Ver0.2";
 	compatible = "rhodesisland,electric-pass",
 	         "allwinner,suniv-f1c200s",
 			 "allwinner,suniv-f1c100s";
@@ -70,7 +70,7 @@
 		pwms = <&pwm 0 10000 0>;
 		
 
-		brightness-levels = <0 4 8 16 32 64 128 196 255>;
+		brightness-levels = <0 4 8 16 32 64 128 196 220 255>;
 		default-brightness-level = <6>;
 	};
 
@@ -90,16 +90,10 @@
 
 
 	spi1_pins: spi1-pins {
-		pins = "PE7","PE8", "PE9", "PE10";
+		pins = "PE8", "PE9", "PE10";
 		function = "spi1";
 		bias-pull-up;
 	};
-
-	rtp_pins_01: rtp-pins-01 {
-			pins = "PA0", "PA1";
-			function = "rtp";
-		};
-
 };
 
 &pwm {
@@ -155,7 +149,7 @@
 		#size-cells = <1>;
 		compatible = "spi-nand";
 		reg = <0>;
-		spi-max-frequency = <100000000>;
+		spi-max-frequency = <50000000>;
 		status = "okay";
 
 		partitions {
@@ -206,11 +200,11 @@
 	pinctrl-0 = <&uart0_pe_pins>;
 	status = "okay";
 };
-&uart1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&uart1_pa_pins>;
-	status = "okay";
-};
+// &uart1 {
+// 	pinctrl-names = "default";
+// 	pinctrl-0 = <&uart1_pa_pins>;
+// 	status = "disabled";
+// };
 
 &mmc0 {	
 	vmmc-supply = <&reg_vcc3v3>;
@@ -257,9 +251,7 @@
 };
 
 &rtp {
-	status = "disabled";
-	pinctrl-0 = <&rtp_pins_01>;
-	pinctrl-names = "default";
+	status = "okay";
 };
 
 &tcon0 {
@@ -283,28 +275,42 @@
 		label = "Number_1";
 		linux,code = <KEY_1>;
 		channel = <0>;
-		voltage = <1111111>;
+		voltage = <0>;
 	};
 
 	button-num-2 {
 		label = "Number_2";
 		linux,code = <KEY_2>;
 		channel = <0>;
-		voltage = <825396>;
+		voltage = <444444>;
 	};
 
 	button-num-3 {
 		label = "Number_3";
 		linux,code = <KEY_3>;
 		channel = <0>;
-		voltage = <444444>;
+		voltage = <825396>;
 	};
 
 	button-num-4 {
 		label = "Number_4";
 		linux,code = <KEY_4>;
 		channel = <0>;
-		voltage = <0>;
+		voltage = <1111111>;
+	};
+
+	button-num-5 {
+		label = "Number_5";
+		linux,code = <KEY_5>;
+		channel = <0>;
+		voltage = <1365079>;
+	};
+
+	button-num-6 {
+		label = "Number_6";
+		linux,code = <KEY_6>;
+		channel = <0>;
+		voltage = <1555555>;
 	};
 };
 
@@ -330,7 +336,7 @@
 		compatible = "st,lsm6ds3";
 		reg = <0x6a>;
 		interrupt-parent = <&pio>;
-		interrupts = <4 2 IRQ_TYPE_EDGE_FALLING>;/*(PE2)*/
+		interrupts = <4 11 IRQ_TYPE_EDGE_FALLING>;/*(PE11)*/
 	};
 };
 
