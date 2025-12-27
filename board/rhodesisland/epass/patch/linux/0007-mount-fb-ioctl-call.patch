@@ -75,7 +75,7 @@
  
  static int drm_sun4i_gem_dumb_create(struct drm_file *file_priv,
  				     struct drm_device *drm,
-@@ -40,6 +45,235 @@
+@@ -40,6 +45,255 @@
  
  DEFINE_DRM_GEM_CMA_FOPS(sun4i_drv_fops);
  
@@ -232,14 +232,19 @@
 +}
 +int srgn_mount_fb(struct drm_device *drm, void *data, struct drm_file *file)
 +{
-+	struct drm_srgn_mount_fb *arg = data;
++	struct drm_srgn_mount_fb *kreq = data;
 +	struct sun4i_drv *drv = drm->dev_private;
-+	struct sunxi_engine *engine;
-+	struct sun4i_frontend *frontend;
-+	struct sun4i_backend *backend;
-+	struct sun4i_tcon *tcon;
++	static struct sunxi_engine *engine;
++	static struct sun4i_frontend *frontend;
++	static struct sun4i_backend *backend;
++	static struct sun4i_tcon *tcon;
++	struct drm_srgn_mount_fb_data kcmd[4] = {0};
++	struct drm_srgn_mount_fb_data *arg;
 +
++	static bool first_time = true;
++	size_t sz;
 +	int ret;
++	int i;
 +
 +	phys_addr_t ch0_addr = NULL;
 +	phys_addr_t ch1_addr = NULL;
@@ -248,55 +253,70 @@
 +	struct list_head *entry;
 +
 +	// theres only 1 engine,1 fe 1 tcon in f1c100s.
-+	list_for_each(entry, &drv->engine_list) {
-+		engine = container_of(entry, struct sunxi_engine, list);
-+		backend = engine_to_sun4i_backend(engine);
-+	}
-+	list_for_each(entry, &drv->frontend_list) {
-+		frontend = container_of(entry, struct sun4i_frontend, list);
-+	}
-+	list_for_each(entry, &drv->tcon_list) {
-+		tcon = container_of(entry, struct sun4i_tcon, list);
++	// we only need to get the pointers once, and keep them for the lifetime of the driver
++	if (first_time) {
++		list_for_each(entry, &drv->engine_list) {
++			engine = container_of(entry, struct sunxi_engine, list);
++			backend = engine_to_sun4i_backend(engine);
++		}
++		list_for_each(entry, &drv->frontend_list) {
++			frontend = container_of(entry, struct sun4i_frontend, list);
++		}
++		list_for_each(entry, &drv->tcon_list) {
++			tcon = container_of(entry, struct sun4i_tcon, list);
++		}
++		first_time = false;
 +	}
 +
 +	SRGN_DEBUG_PRINT("ioctl_backend: %px\n", backend);
 +	SRGN_DEBUG_PRINT("ioctl_frontend: %px\n", frontend);
 +	SRGN_DEBUG_PRINT("ioctl_tcon: %px\n", tcon);
 +
-+	SRGN_DEBUG_PRINT("sizeof(arg)=%ld\n", sizeof(struct drm_srgn_mount_fb));
-+	SRGN_DEBUG_PRINT("srgn_mount_fb: layer_id=%d, type=%d, ch0_addr=%px, ch1_addr=%px, ch2_addr=%px\n",
-+		arg->layer_id, arg->type, arg->ch0_addr, arg->ch1_addr, arg->ch2_addr);
++	SRGN_DEBUG_PRINT("sizeof(arg)=%ld\n", kreq->size);
 +
-+	
-+	if (arg->type == DRM_SRGN_MOUNT_FB_TYPE_YUV) {
-+		SRGN_DEBUG_PRINT("ioctl_yuv: true\n");
-+		ret = srgn_get_phy_addr(arg->ch0_addr,&ch0_addr);
-+		if (ret < 0) {
-+			SRGN_DEBUG_PRINT("YUV ioctl get ch0_addr failed\n");
-+			return ret;
-+		}
-+		ret = srgn_get_phy_addr(arg->ch1_addr,&ch1_addr);
-+		if (ret < 0) {
-+			SRGN_DEBUG_PRINT("YUV ioctl get ch1_addr failed\n");
-+			return ret;
-+		}
-+		SRGN_DEBUG_PRINT("YUV ioctl get ch0_addr=%px, ch1_addr=%px\n", ch0_addr, ch1_addr);
-+
-+		srgn_set_frontend_buffer(frontend, ch0_addr, ch1_addr, NULL, 2);
-+	} else {
-+		SRGN_DEBUG_PRINT("ioctl_yuv: false\n");
-+		ret = srgn_get_phy_addr(arg->ch0_addr,&ch0_addr);
-+		if (ret < 0) {
-+			SRGN_DEBUG_PRINT("NORMAL ioctl get ch0_addr failed\n");
-+			return ret;
-+		}
-+
-+		SRGN_DEBUG_PRINT("ioctl get ch0_addr=%px\n", ch0_addr);
-+
-+		srgn_set_backend_buffer(backend, ch0_addr, arg->layer_id);
-+
++	if(kreq->size > 4){
++		printk(KERN_ERR "srgn: size > 4\n");
++		return -EINVAL;
 +	}
++	if (copy_from_user(kcmd, (void __user *)kreq->data, kreq->size * sizeof(struct drm_srgn_mount_fb_data))) {
++		printk(KERN_ERR "srgn: copy_from_user failed\n");
++        return -EFAULT;
++    }
++	
++	for (i=0; i<kreq->size; i++) {
++		arg = &kcmd[i];
++		SRGN_DEBUG_PRINT("srgn_mount_fb: layer_id=%d, type=%d, ch0_addr=%px, ch1_addr=%px, ch2_addr=%px\n",
++			arg->layer_id, arg->type, arg->ch0_addr, arg->ch1_addr, arg->ch2_addr);
 +
++		if (arg->type == DRM_SRGN_MOUNT_FB_TYPE_YUV) {
++			SRGN_DEBUG_PRINT("ioctl_yuv: true\n");
++			ret = srgn_get_phy_addr(arg->ch0_addr,&ch0_addr);
++			if (ret < 0) {
++				SRGN_DEBUG_PRINT("YUV ioctl get ch0_addr failed\n");
++				return ret;
++			}
++			ret = srgn_get_phy_addr(arg->ch1_addr,&ch1_addr);
++			if (ret < 0) {
++				SRGN_DEBUG_PRINT("YUV ioctl get ch1_addr failed\n");
++				return ret;
++			}
++			SRGN_DEBUG_PRINT("YUV ioctl get ch0_addr=%px, ch1_addr=%px\n", ch0_addr, ch1_addr);
++
++			srgn_set_frontend_buffer(frontend, ch0_addr, ch1_addr, NULL, 2);
++		} else {
++			SRGN_DEBUG_PRINT("ioctl_yuv: false\n");
++			ret = srgn_get_phy_addr(arg->ch0_addr,&ch0_addr);
++			if (ret < 0) {
++				SRGN_DEBUG_PRINT("NORMAL ioctl get ch0_addr failed\n");
++				return ret;
++			}
++
++			SRGN_DEBUG_PRINT("ioctl get ch0_addr=%px\n", ch0_addr);
++
++			srgn_set_backend_buffer(backend, ch0_addr, arg->layer_id);
++
++		}
++	}
 +
 +	return 0;
 +}
@@ -311,7 +331,7 @@
  static struct drm_driver sun4i_drv_driver = {
  	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
  
-@@ -54,6 +288,9 @@
+@@ -54,6 +308,9 @@
  	/* GEM Operations */
  	DRM_GEM_CMA_VMAP_DRIVER_OPS,
  	.dumb_create		= drm_sun4i_gem_dumb_create,
@@ -339,7 +359,7 @@
  #endif /* _SUN4I_DRV_H_ */
 --- a/include/uapi/drm/srgn_drm.h
 +++ b/include/uapi/drm/srgn_drm.h
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,32 @@
 +// sync with kernel driver
 +#ifndef _UAPI_SRGN_DRM_H_
 +#define _UAPI_SRGN_DRM_H_
@@ -358,12 +378,17 @@
 +#define DRM_IOCTL_SRGN_RESET_CACHE DRM_IO(DRM_COMMAND_BASE + DRM_SRGN_RESET_CACHE)
 +
 +
-+struct drm_srgn_mount_fb {
-+	__u32 layer_id;
++struct drm_srgn_mount_fb_data {
++       __u32 layer_id;
 +    __u32 type;
 +    __u32 ch0_addr;
 +    __u32 ch1_addr;
 +    __u32 ch2_addr;
++};
++
++struct drm_srgn_mount_fb {
++    __u32 size;
++    __u32 data;
 +};
 +
 +#endif
