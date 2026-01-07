@@ -5,9 +5,25 @@ if [ "$(tty)" != "/dev/tty0" ]; then
     return
 fi
 
+memcheck
+
+wait_any_key(){
+    LAST_TIME=$(date +%s)
+    echo "Press any key to continue..."
+    while [ $? -eq 0 ]; do
+        read -n1
+        CURRENT_TIME=$(date +%s)
+        ELAPSED_TIME=$((CURRENT_TIME - LAST_TIME))
+        if [ $ELAPSED_TIME -ge 5 ]; then
+            echo "Triggered!"
+            break
+        fi
+    done
+}
+
 # if epass_drm_app is not present
 if [ ! -f "./epass_drm_app" ]; then
-cat << EOF
+    cat << EOF
   _   _  ____  _____       _______
  | \ | |/ __ \|  __ \   /\|__   __|/\
  |  \| | |  | | |  | | /  \  | |  /  \
@@ -18,11 +34,10 @@ cat << EOF
 Please copy 'epass_drm_app' and asset files.
 to app directory.
 
-
-
-
 EOF
-else
+    usbctl mtp
+    return
+fi
 
 cat << EOF
                       *
@@ -82,79 +97,23 @@ if [ $mount_ret -eq 0 ]; then
     echo "SD Card Mounted!"
 fi
 
-
-echo -n "System initializing"
-for i in $(seq 1 3); do
-    echo -n "."
-    sleep 1
-done
-echo ""
-echo "Starting Application..."
-# echo 0 > /sys/class/vtconsole/vtcon1/bind
-# ./lvglsim
-if [ $mount_ret -eq 0 ]; then
-./epass_drm_app aux > /dev/null
-else
-./epass_drm_app > /dev/null
-fi
-
-fi
-
-cat << EOF
- /##   /##  /######  /#######
-| ##  | ## /##__  ##| ##__  ##
-| ##  | ##| ##  \__/| ##  \ ##
-| ##  | ##|  ###### | #######
-| ##  | ## \____  ##| ##__  ##
-| ##  | ## /##  \ ##| ##  \ ##
-|  ######/|  ######/| #######/
- \______/  \______/ |_______/
-
-To Download Assets,
-Connect Your Electric Pass Device via USB.
-Press any key to Reboot...
-
-
-EOF
-
-
-# 获取内存大小并转换为MB（100S/200S判断）
-if [ -f /proc/meminfo ]; then
-    MEM_TOTAL=$(grep 'MemTotal' /proc/meminfo | awk '{print $2}')
-    if [ -n "$MEM_TOTAL" ]; then
-        MEM_MB=$(awk -v total="$MEM_TOTAL" 'BEGIN {printf "%.2f", total / 1000}')
-        echo "Memory: $MEM_MB MB"
-        
-        # 判断内存大小：小于45MB输出1，否则输出2
-        if [ "$MEM_TOTAL" -lt 46080 ]; then  # 45MB = 45 * 1024 = 46080KB
-            echo "
-                F1C100s
-:::'##:::::'#####:::::'#####::::'######::
-:'####::::'##.. ##:::'##.. ##::'##... ##:
-:.. ##:::'##:::: ##:'##:::: ##: ##:::..::
-::: ##::: ##:::: ##: ##:::: ##:. ######::
-::: ##::: ##:::: ##: ##:::: ##::..... ##:
-::: ##:::. ##:: ##::. ##:: ##::'##::: ##:
-:'######::. #####::::. #####:::. ######::
-:......::::.....::::::.....:::::......:::"
-        else
-            echo "
-                F1C200S
-:'#######::::'#####:::::'#####::::'######::
-'##.... ##::'##.. ##:::'##.. ##::'##... ##:
-..::::: ##:'##:::: ##:'##:::: ##: ##:::..::
-:'#######:: ##:::: ##: ##:::: ##:. ######::
-'##:::::::: ##:::: ##: ##:::: ##::..... ##:
- ##::::::::. ##:: ##::. ##:: ##::'##::: ##:
- #########::. #####::::. #####:::. ######::
-.........::::.....::::::.....:::::......:::"
-        fi
+while true; do
+    chmod +x ./epass_drm_app
+    ./epass_drm_app > /dev/null
+    if [ $? -eq 1 ]; then
+        echo "Restarting..."
+        sleep 2
+    elif [ $? -eq 2 ]; then
+        echo "Request application start..."
+        chmod +x /tmp/appstart
+        /tmp/appstart
+        wait_any_key
+        echo "Restarting..."
+        sleep 2
     else
-        echo "Memory: Unknown (MemTotal not found)"
+        break
     fi
-else
-    echo "Memory: Unknown (/proc/meminfo not found)"
-fi
+done
 
 
 if [ $mount_ret -eq 0 ]; then
@@ -163,15 +122,6 @@ else
     umtpctl start
 fi
 
-LAST_TIME=$(date +%s)
-while [ $? -eq 0 ]; do
-    read -n1
-    CURRENT_TIME=$(date +%s)
-    ELAPSED_TIME=$((CURRENT_TIME - LAST_TIME))
-    if [ $ELAPSED_TIME -ge 5 ]; then
-        echo "Triggered!"
-        break
-    fi
-done
+wait_any_key
 
 reboot

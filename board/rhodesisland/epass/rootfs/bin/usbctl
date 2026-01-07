@@ -1,0 +1,126 @@
+#!/bin/sh
+
+init_clean_gadget() {
+    start-stop-daemon -K -q -p /var/run/umtprd.pid -x /usr/sbin/umtprd 2>/dev/null
+    start-stop-daemon -K -q -p /var/run/getty.pid -x /sbin/getty 2>/dev/null
+    /sbin/ifdown -a
+
+    if [ ! -d /sys/kernel/config/usb_gadget ]; then
+        mount -t configfs none /sys/kernel/config
+    fi
+    if [ -d /sys/kernel/config/usb_gadget/g1 ]; then
+        echo > /sys/kernel/config/usb_gadget/g1/UDC
+        sleep 1
+    fi
+    umount /dev/ffs-mtp 2>/dev/null
+    mkdir /sys/kernel/config/usb_gadget/g1
+    cd /sys/kernel/config/usb_gadget/g1
+
+    # remove all gadgets if any exist
+
+    rm configs/c.1/ffs.mtp
+    rm configs/c.1/acm.usb0
+    rm configs/c.1/rndis.usb0
+
+    rmdir functions/ffs.mtp
+    rmdir functions/acm.usb0
+    rmdir functions/rndis.usb0
+
+    mkdir configs/c.1
+    mkdir strings/0x409
+    mkdir configs/c.1/strings/0x409
+
+    echo 0x1D6B > idVendor
+
+    echo "Rhodes Island" > strings/0x409/manufacturer
+    echo "Electric Pass" > strings/0x409/product
+
+    echo "Conf 1" > configs/c.1/strings/0x409/configuration
+    echo 120 > configs/c.1/MaxPower
+}
+
+mtp_start() {
+    init_clean_gadget
+    echo 0x0200 > idProduct
+
+    cd /sys/kernel/config/usb_gadget/g1
+    mkdir functions/ffs.mtp
+
+    ln -s functions/ffs.mtp configs/c.1
+    mkdir /dev/ffs-mtp
+    mount -t functionfs mtp /dev/ffs-mtp
+
+
+    cp /etc/umtprd/umtprd_nosd.conf /etc/umtprd/umtprd.conf
+
+    start-stop-daemon -S -q -m -b -p /var/run/umtprd.pid -x /usr/sbin/umtprd
+    sleep 1
+    ls /sys/class/udc/ > /sys/kernel/config/usb_gadget/g1/UDC
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+serial_start() {
+    init_clean_gadget
+    echo 0x0201 > idProduct
+
+    cd /sys/kernel/config/usb_gadget/g1
+    mkdir functions/acm.usb0
+
+    ln -s functions/acm.usb0 configs/c.1
+    start-stop-daemon -S -q -m -b -p /var/run/getty.pid -x /sbin/getty -- -L ttyGS0 115200 vt100
+    sleep 1
+    ls /sys/class/udc/ > /sys/kernel/config/usb_gadget/g1/UDC
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+rndis_start() {
+    init_clean_gadget
+    echo 0x0202 > idProduct
+
+    cd /sys/kernel/config/usb_gadget/g1
+    mkdir functions/rndis.usb0
+
+    ln -s functions/rndis.usb0 configs/c.1
+    sleep 1
+    ls /sys/class/udc/ > /sys/kernel/config/usb_gadget/g1/UDC
+    sleep 1
+    /sbin/ifup -a
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+
+stop() {
+    printf "Stopping USB gadget: "
+    echo > /sys/kernel/config/usb_gadget/g1/UDC 2>/dev/null
+    start-stop-daemon -K -q -p /var/run/umtprd.pid -x /usr/sbin/umtprd 2>/dev/null
+    start-stop-daemon -K -q -p /var/run/getty.pid -x /sbin/getty 2>/dev/null
+    umount /dev/ffs-mtp 2>/dev/null
+    rm -rf /sys/kernel/config/usb_gadget/g1 2>/dev/null
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+case "$1" in
+    mtp)
+        mtp_start
+        ;;
+    serial)
+        serial_start
+        ;;
+    rndis)
+        rndis_start
+        ;;
+    none)
+        stop
+        ;;
+    start)
+        mtp_start
+        ;;
+    stop)
+        stop
+        ;;
+    *)
+        echo "Usage: $0 {mtp|serial|rndis|none|start|stop}"
+        exit 1
+esac
+
+exit $?
