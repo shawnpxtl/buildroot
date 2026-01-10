@@ -40,6 +40,10 @@ init_clean_gadget() {
 }
 
 mtp_start() {
+    if [ -d "/sys/kernel/config/usb_gadget/g1/configs/c.1/ffs.mtp" ]; then
+        echo "MTP already running."
+        return
+    fi
     init_clean_gadget
     echo 0x0200 > idProduct
 
@@ -60,6 +64,10 @@ mtp_start() {
 }
 
 serial_start() {
+    if [ -d "/sys/kernel/config/usb_gadget/g1/configs/c.1/acm.usb0" ]; then
+        echo "Serial already running."
+        return
+    fi
     init_clean_gadget
     echo 0x0201 > idProduct
 
@@ -74,6 +82,10 @@ serial_start() {
 }
 
 rndis_start() {
+    if [ -d "/sys/kernel/config/usb_gadget/g1/configs/c.1/rndis.usb0" ]; then
+        echo "RNDIS already running."
+        return
+    fi
     init_clean_gadget
     echo 0x0202 > idProduct
 

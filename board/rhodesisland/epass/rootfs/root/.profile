@@ -21,6 +21,18 @@ wait_any_key(){
     done
 }
 
+randomly_start_prts_last_call(){
+    RANDOM_NUM=$((RANDOM % 5))
+    echo "......"
+    if [ $RANDOM_NUM -eq 0 ]; then
+        prts_last_call
+    fi
+    echo "........."
+    sleep 3
+    clear
+    echo "Signal Lost...."
+}
+
 # if epass_drm_app is not present
 if [ ! -f "./epass_drm_app" ]; then
     cat << EOF
@@ -100,28 +112,29 @@ fi
 while true; do
     chmod +x ./epass_drm_app
     ./epass_drm_app > /dev/null
-    if [ $? -eq 1 ]; then
+    epass_ret=$?
+    if [ $epass_ret -eq 1 ]; then
         echo "Restarting..."
         sleep 2
-    elif [ $? -eq 2 ]; then
+    elif [ $epass_ret -eq 2 ]; then
+        clear
         echo "Request application start..."
         chmod +x /tmp/appstart
         /tmp/appstart
         wait_any_key
         echo "Restarting..."
-        sleep 2
+    elif [ $epass_ret -eq 3 ]; then
+        randomly_start_prts_last_call
+        poweroff
+        return
     else
         break
     fi
 done
 
 
-if [ $mount_ret -eq 0 ]; then
-    umtpctl auxstart
-else
-    umtpctl start
-fi
-
+# if anything happens, switch to MTP mode for file transfer
+usbctl mtp
 wait_any_key
 
 reboot
