@@ -21,6 +21,10 @@ flash_dt() {
     xfel spinand write 0x100000 output/images/devicetree-0.3.dtb
 }
 
+flash_dt_5() {
+    xfel spinand write 0x100000 output/images/devicetree-0.5.dtb
+}
+
 flash_linux() {
     xfel spinand write 0x120000 output/images/zImage
 }
@@ -34,6 +38,9 @@ case "$TARGET" in
         ;;
     dt)
         flash_dt
+        ;;
+    dt5)
+        flash_dt_5
         ;;
     linux)
         flash_linux

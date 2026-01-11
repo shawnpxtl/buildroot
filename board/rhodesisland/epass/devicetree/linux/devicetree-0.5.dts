@@ -1,0 +1,649 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR X11)
+
+/dts-v1/;
+#include "suniv-f1c100s.dtsi"
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/display/st7701initseq.h>
+
+/ {
+	model = "Arknights_Electric_Pass_Ver0.5";
+	compatible = "rhodesisland,electric-pass",
+	         "allwinner,suniv-f1c200s",
+			 "allwinner,suniv-f1c100s";
+
+	chosen {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		// this bootargs will not work. change bootargs in uboot!
+		bootargs = "serial0:115200n8 console=ttyS0,115200 console=tty0 earlyprintk rootwait init=/preinit root=/dev/mtdblock2 rootfstype=squashfs overlayfsdev=/dev/mtdblock3 fbcon=rotate:2 debug drm.debug=0x1ff";
+
+		// simplefb_lcd: framebuffer-lcd0 {
+		// 	compatible = "allwinner,simple-framebuffer",
+		// 		     "simple-framebuffer";
+		// 	allwinner,pipeline = "de_be0-lcd0";
+		// 	clocks = <&ccu CLK_BUS_DE_BE>, <&ccu CLK_DE_BE>,
+		// 		 <&ccu CLK_DRAM_DE_BE>, <&ccu CLK_BUS_LCD>,
+		// 		 <&ccu CLK_TCON>;
+		// 	status = "disabled";
+		// };
+	};
+
+	panel: panel {
+		// compatible = "qiaodian,qd43003c0-40", "simple-panel";	// 4.3 inch,480x272
+		//compatible = "foxlink,fl500wvr00-a0t", "simple-panel";	// 4.3 & 5 inch,800x480
+		//compatible = "hongxiangrui,hxr401-40", "simple-panel";	// 480x480
+		//compatible = "huadi,hd395004c40-40", "simple-panel";	// 720x720
+		//compatible = "avic,tm070ddh03", "simple-panel";	// 1024x600
+		compatible = "lattland,mostima", "simple-panel";	// 360x640 3 inch
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			panel_input: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&tcon0_out_lcd>;
+			};
+		};
+	};
+	reg_vcc3v3: vcc3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	reg_lradc: reg_lradc {
+		compatible = "regulator-fixed";
+		regulator-name = "lradc_vref";
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3000000>;
+	};
+
+	backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm 0 10000 0>;
+		
+
+		brightness-levels = <0 4 8 16 32 64 128 196 220 255>;
+		default-brightness-level = <6>;
+	};
+
+	// reserved-memory {
+    //       #address-cells = <1>;
+    //       #size-cells = <1>;
+    //       ranges;
+	// 	  cedar_reserved: cedar_reserved@80100000 {
+	// 			compatible = "shared-dma-pool";
+	// 			reg = <0x80100000 0xc0000>;
+	// 			no-map;
+	// 		};
+	// };
+
+	st7701initseq: st7701initseq {
+		compatible = "lattland,st7701-initseq";
+		status = "okay";
+		sda-gpios = <&pio 4 4 GPIO_ACTIVE_HIGH>; /* PE4 */
+		scl-gpios = <&pio 3 19 GPIO_ACTIVE_HIGH>; /* PD19 */
+		cs-gpios = <&pio 4 11 GPIO_ACTIVE_HIGH>; /* PE11 */
+
+		init-sequence = <
+			ST7701INIT_BEGIN_WRITE
+
+			ST7701INIT_WRITE_COMMAND_8 0xFF 
+			ST7701INIT_WRITE_BYTES 5 0x77 0x01 0x00 0x00 0x13 
+
+			ST7701INIT_WRITE_C8_D8 0xEF 0x08 
+
+			ST7701INIT_WRITE_COMMAND_8 0xFF 
+			ST7701INIT_WRITE_BYTES 5 0x77 0x01 0x00 0x00 0x10 
+
+			ST7701INIT_WRITE_C8_D16 0xC0 0x4F 0x00
+			ST7701INIT_WRITE_C8_D16 0xC1 0x07 0x02  
+			ST7701INIT_WRITE_C8_D16 0xC2 0x31 0x05 
+
+			ST7701INIT_WRITE_C8_D8 0xC7 0x04 
+			
+			ST7701INIT_WRITE_COMMAND_8 0xC3 
+			ST7701INIT_WRITE_BYTES 3 0x82 0x18 0x0e 
+
+			ST7701INIT_WRITE_C8_D8 0xCC 0x10 
+
+			ST7701INIT_WRITE_COMMAND_8 0xB0 
+			ST7701INIT_WRITE_BYTES 16 
+			0x0A 0x14 0x1B 0x0D 
+			0x10 0x05 0x07 0x08 
+			0x06 0x22 0x03 0x11 
+			0x10 0xAD 0x31 0x1B 
+
+			ST7701INIT_WRITE_COMMAND_8 0xB1 
+			ST7701INIT_WRITE_BYTES 16 
+			0x0A 0x14 0x1B 0x0D 
+			0x10 0x05 0x07 0x08 
+			0x06 0x22 0x03 0x11 
+			0x10 0xAD 0x31 0x1B 
+
+			ST7701INIT_WRITE_COMMAND_8 0xFF 
+			ST7701INIT_WRITE_BYTES 5 0x77 0x01 0x00 0x00 0x11 
+
+			ST7701INIT_WRITE_C8_D8 0xB0 0x53 
+			ST7701INIT_WRITE_C8_D8 0xB1 0x60 
+			ST7701INIT_WRITE_C8_D8 0xB2 0x07 
+			ST7701INIT_WRITE_C8_D8 0xB3 0x80 
+			ST7701INIT_WRITE_C8_D8 0xB5 0x49 
+			ST7701INIT_WRITE_C8_D8 0xB7 0x85 
+			ST7701INIT_WRITE_C8_D8 0xB8 0x21 
+			ST7701INIT_WRITE_C8_D8 0xC1 0x78 
+			ST7701INIT_WRITE_C8_D8 0xC2 0x78 
+
+			ST7701INIT_WRITE_COMMAND_8 0xE0 
+			ST7701INIT_WRITE_BYTES 3 0x00 0x00 0x02 
+
+			ST7701INIT_WRITE_COMMAND_8 0xE1 
+			ST7701INIT_WRITE_BYTES 11 
+			0x03 0xA0 0x00 0x00 
+			0x02 0xA0 0x00 0x00 
+			0x00 0x33 0x33 
+
+			ST7701INIT_WRITE_COMMAND_8 0xE2 
+			ST7701INIT_WRITE_BYTES 12 
+			0x22 0x22 0x33 0x33 
+			0x88 0xA0 0x00 0x00 
+			0x87 0xA0 0x00 0x00 
+
+			ST7701INIT_WRITE_COMMAND_8 0xE3 
+			ST7701INIT_WRITE_BYTES 4 0x00 0x00 0x22 0x22 
+
+			ST7701INIT_WRITE_C8_D16 0xE4 0x44 0x44 
+
+			ST7701INIT_WRITE_COMMAND_8 0xE5 
+			ST7701INIT_WRITE_BYTES 16 
+			0x04 0x84 0xA0 0xA0 
+			0x06 0x86 0xA0 0xA0 
+			0x08 0x88 0xA0 0xA0 
+			0x0A 0x8A 0xA0 0xA0 
+
+			ST7701INIT_WRITE_COMMAND_8 0xE6 
+			ST7701INIT_WRITE_BYTES 4 0x00 0x00 0x22 0x22 
+
+			ST7701INIT_WRITE_C8_D16 0xE7 0x44 0x44 
+
+			ST7701INIT_WRITE_COMMAND_8 0xE8 
+			ST7701INIT_WRITE_BYTES 16 
+			0x03 0x83 0xA0 0xA0 
+			0x05 0x85 0xA0 0xA0 
+			0x07 0x87 0xA0 0xA0 
+			0x09 0x89 0xA0 0xA0 
+
+			ST7701INIT_WRITE_COMMAND_8 0xEB 
+			ST7701INIT_WRITE_BYTES 7 
+			0x00 0x01 0xE4 0xE4 
+			0x88 0x00 0x40 
+
+			ST7701INIT_WRITE_C8_D16 0xEC 0x3C 0x01 
+
+			ST7701INIT_WRITE_COMMAND_8 0xED 
+			ST7701INIT_WRITE_BYTES 16 
+			0xAB 0x89 0x76 0x54 
+			0x02 0xFF 0xFF 0xFF 
+			0xFF 0xFF 0xFF 0x20 
+			0x45 0x67 0x98 0xBA 
+
+			ST7701INIT_WRITE_C8_D8 0x36 0x10 
+
+			ST7701INIT_WRITE_COMMAND_8 0xFF 
+			ST7701INIT_WRITE_BYTES 5 0x77 0x01 0x00 0x00 0x13 
+
+			ST7701INIT_WRITE_C8_D16 0xE8 0x00 0x0E 
+
+			ST7701INIT_WRITE_COMMAND_8 0x20 
+			ST7701INIT_WRITE_C8_D8 0x3A 0x50 
+
+			ST7701INIT_WRITE_COMMAND_8 0x11 
+			ST7701INIT_END_WRITE 
+
+			ST7701INIT_DELAY 150 
+
+			ST7701INIT_BEGIN_WRITE 
+			ST7701INIT_WRITE_C8_D16 0xE8 0x00 0x0C 
+			ST7701INIT_END_WRITE 
+
+			ST7701INIT_DELAY 100 
+
+			ST7701INIT_BEGIN_WRITE 
+			ST7701INIT_WRITE_C8_D16 0xE8 0x00 0x00 
+
+			ST7701INIT_WRITE_COMMAND_8 0xFF 
+			ST7701INIT_WRITE_BYTES 5 0x77 0x01 0x00 0x00 0x00 
+
+			ST7701INIT_WRITE_COMMAND_8 0x29 
+			ST7701INIT_END_WRITE
+			ST7701INIT_DELAY 20
+		>;
+		// init-sequence = <
+		// 	ST7701INIT_BEGIN_WRITE 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xFF 
+		// 	ST7701INIT_WRITE_BYTES  5  0x77  0x01  0x00  0x00  0x13 
+
+		// 	ST7701INIT_WRITE_C8_D8  0xEF  0x08 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xFF 
+		// 	ST7701INIT_WRITE_BYTES  5  0x77  0x01  0x00  0x00  0x10 
+
+		// 	ST7701INIT_WRITE_C8_D16 0xC0 0x4F 0x00 
+		// 	ST7701INIT_WRITE_C8_D16 0xC1 0x10 0x0C
+		// 	ST7701INIT_WRITE_C8_D16 0xC2 0x07 0x0A 
+
+		// 	ST7701INIT_WRITE_C8_D8 0xC7 0x04 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xC3 
+		// 	ST7701INIT_WRITE_BYTES  3  0x82 0x18 0x0e  
+
+		// 	ST7701INIT_WRITE_C8_D8  0xCC  0x10 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xB0 
+		// 	ST7701INIT_WRITE_BYTES  16 
+		// 	0x00  0x15  0x1D  0x0C 
+		// 	0x10  0x05  0x0C  0x07 
+		// 	0x05  0x29  0x03  0x11 
+		// 	0x0F  0x30  0x36  0x1F 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xB1 
+		// 	ST7701INIT_WRITE_BYTES  16 
+		// 	0x00  0x12  0x18  0x0C 
+		// 	0x10  0x06  0x02  0x09 
+		// 	0x0A  0x1E  0x06  0x12 
+		// 	0x10  0x26  0x2E  0x1F 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xFF 
+		// 	ST7701INIT_WRITE_BYTES  5  0x77  0x01  0x00  0x00  0x11 
+
+		// 	ST7701INIT_WRITE_C8_D8  0xB0  0x45 
+		// 	ST7701INIT_WRITE_C8_D8  0xB1  0x60 
+		// 	ST7701INIT_WRITE_C8_D8  0xB2  0x81 
+		// 	ST7701INIT_WRITE_C8_D8  0xB3  0x80 
+		// 	ST7701INIT_WRITE_C8_D8  0xB5  0x4E 
+		// 	ST7701INIT_WRITE_C8_D8  0xB7  0x85 
+		// 	ST7701INIT_WRITE_C8_D8  0xB8  0x33 
+		// 	ST7701INIT_WRITE_C8_D8  0xC0  0x89 
+		// 	ST7701INIT_WRITE_C8_D8  0xB9  0x10 
+		// 	ST7701INIT_WRITE_C8_D8  0xC1  0x78 
+		// 	ST7701INIT_WRITE_C8_D8  0xC2  0x78 
+		// 	ST7701INIT_WRITE_C8_D8  0xD0  0x88 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xE0 
+		// 	ST7701INIT_WRITE_BYTES  3  0x00  0x00  0x02 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xE1 
+		// 	ST7701INIT_WRITE_BYTES  11 
+		// 	0x05  0x28  0x00  0x28 
+		// 	0x06  0x28  0x00  0x28 
+		// 	0x0E  0x40  0x40 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xE2 
+		// 	ST7701INIT_WRITE_BYTES  13 
+		// 	0x20  0x20  0x40  0x40 
+		// 	0x97  0x00  0x00  0x00 
+		// 	0x97  0x8C  0x00  0x8C 
+		// 	0x00 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xE3 
+		// 	ST7701INIT_WRITE_BYTES  4  0x00  0x00  0x22  0x22 
+
+		// 	ST7701INIT_WRITE_C8_D16  0xE4  0x44  0x44 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xE5 
+		// 	ST7701INIT_WRITE_BYTES  16 
+		// 	0x0D  0x93  0x2C  0x8C 
+		// 	0x0F  0x95  0x2C  0x8C 
+		// 	0x09  0x8F  0x2C  0x8C 
+		// 	0x0B  0x91  0x2C  0x8C 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xE6 
+		// 	ST7701INIT_WRITE_BYTES  4  0x00  0x00  0x22  0x22 
+
+		// 	ST7701INIT_WRITE_C8_D16  0xE7  0x44  0x44 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xE8 
+		// 	ST7701INIT_WRITE_BYTES  16 
+		// 	0x0C  0x92  0x2C  0x8C 
+		// 	0x0E  0x94  0x2C  0x8C 
+		// 	0x08  0x8E  0x2C  0x8C 
+		// 	0x0A  0x90  0x2C  0x8C 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xEB 
+		// 	ST7701INIT_WRITE_BYTES  7  0x00  0x01  0x4E  0x4E  0x44  0x88  0x40 
+
+		// 	ST7701INIT_WRITE_C8_D16  0xEC  0x7D  0x00 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xED 
+		// 	ST7701INIT_WRITE_BYTES  16 
+		// 	0x77  0x66  0x55  0x44 
+		// 	0xA8  0x9F  0x02  0xFF 
+		// 	0xFF  0x20  0xF9  0x8A 
+		// 	0x44  0x55  0x66  0x77 
+
+		// 	ST7701INIT_WRITE_C8_D8 0x36 0x10 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xEF 
+		// 	ST7701INIT_WRITE_BYTES  6  0x08  0x08  0x08  0x45  0x3F  0x54 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xFF 
+		// 	ST7701INIT_WRITE_BYTES  5  0x77  0x01  0x00  0x00  0x13 
+
+		// 	ST7701INIT_WRITE_C8_D16  0xE8  0x00  0x0E 
+		// 	ST7701INIT_WRITE_C8_D8  0x3A  0x50 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xFF 
+		// 	ST7701INIT_WRITE_BYTES  5  0x77  0x01  0x00  0x00  0x00 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0x11 
+		// 	ST7701INIT_END_WRITE 
+
+		// 	ST7701INIT_DELAY  120 
+
+		// 	ST7701INIT_BEGIN_WRITE 
+		// 	ST7701INIT_WRITE_COMMAND_8  0xFF 
+		// 	ST7701INIT_WRITE_BYTES  5  0x77  0x01  0x00  0x00  0x13 
+
+		// 	ST7701INIT_WRITE_C8_D16  0xE8  0x00  0x0C 
+		// 	ST7701INIT_END_WRITE 
+
+		// 	ST7701INIT_DELAY  10 
+
+		// 	ST7701INIT_BEGIN_WRITE 
+		// 	ST7701INIT_WRITE_C8_D16  0xE8  0x00  0x00 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0xFF 
+		// 	ST7701INIT_WRITE_BYTES  5  0x77  0x01  0x00  0x00  0x00 
+
+		// 	ST7701INIT_WRITE_COMMAND_8  0x29 
+		// 	ST7701INIT_END_WRITE 
+
+		// 	ST7701INIT_DELAY  20 
+
+		// 	ST7701INIT_BEGIN_WRITE 
+		// 	ST7701INIT_WRITE_C8_D8  0x35  0x00 
+		// 	ST7701INIT_END_WRITE
+		// >;
+	};
+
+	poweroff: gpio-poweroff {
+		compatible = "gpio-poweroff";
+		gpios = <&pio 4 2 GPIO_ACTIVE_HIGH>; //PE2
+		timeout-ms = <3000>;
+	};
+};
+
+&pio{
+
+
+	spi1_pins: spi1-pins {
+		pins = "PE7","PE8", "PE9", "PE10";
+		function = "spi1";
+		bias-pull-up;
+	};
+
+	rtp_pins_01: rtp-pins-01 {
+		pins = "PA0", "PA1";
+		function = "rtp";
+};
+	
+	lcd_rgb565_no_de_pins: lcd-rgb565-no-de-pins {
+		pins = "PD1", "PD2", "PD3", "PD4", "PD5",
+			"PD6", "PD7", "PD8", "PD9", "PD10", "PD11", 
+			"PD13", "PD14", "PD15", "PD16", "PD17",
+			"PD18", "PD20", "PD21";
+		function = "lcd";
+	};
+};
+
+&pwm {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pwm0_pe_pins>;
+	status = "okay";
+};
+
+
+&spi0 {
+	status = "okay";
+
+	spi-nor@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "winbond,w25q128", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <50000000>;
+		status = "disabled";
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x000000 0x70000>;
+				read-only;
+			};
+
+			partition@1 {
+				label = "kernel";
+				reg = <0x70000 0x590000>;
+				read-only;
+			};
+
+			partition@2 {
+				label = "rom";
+				reg = <0x600000 0x700000>;
+				read-only;
+			};
+
+			partition@3 {
+				label = "overlay";
+				reg = <0xd00000 0x300000>;
+			};
+		};
+	};
+
+	spi-nand@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "spi-nand";
+		reg = <0>;
+		spi-max-frequency = <100000000>;
+		status = "okay";
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x000000 0x100000>;
+				read-only;
+			};
+
+			partition@1 {
+				label = "dtb";
+				reg = <0x100000 0x20000>;
+				read-only;
+			};
+
+			partition@2 {
+				label = "kernel";
+				reg = <0x120000 0x500000>;
+				read-only;
+			};
+
+			partition@3 {
+				label = "rootfs";
+				reg = <0x620000 0x79E0000>;
+			};
+		};
+	};
+};
+
+&spi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi1_pins>;
+	status = "okay";
+	// cs-gpios = <&pio 4 7 GPIO_ACTIVE_HIGH>;/* PE7 */
+	spidev@0 {
+	   compatible = "rohm,dh2228fv";	/* Same as "spidev" but without errors at boot. Search "buggy DT" to understand */
+	   spi-max-frequency = <100000000>;
+	   reg = <0>;
+	};
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pe_pins>;
+	status = "okay";
+};
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pa_pins>;
+	status = "okay";
+};
+
+&mmc0 {	
+	vmmc-supply = <&reg_vcc3v3>;
+	bus-width = <4>;
+	status = "okay";
+	broken-cd;
+};
+
+&otg_sram {
+	status = "okay";
+};
+
+&usb_otg {
+	dr_mode = "otg"; /* otg host peripheral */
+	status = "okay";
+};
+
+&usbphy {
+	status = "okay";
+};
+
+&cedar_ve {
+	status = "okay";
+};
+
+&ion {
+	status = "okay";
+};
+
+&de {
+	status = "okay";
+};
+
+&fe0 {
+	status = "okay";
+};
+
+&be0 {
+	status = "okay";
+};
+
+&tve0 {
+	status = "disabled";
+};
+
+&rtp {
+	status = "okay";
+	pinctrl-0 = <&rtp_pins_01>;
+	pinctrl-names = "default";
+};
+
+&tcon0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&lcd_rgb565_no_de_pins>;
+	status = "okay";
+};
+
+&tcon0_out {
+	tcon0_out_lcd: endpoint@0 {
+		reg = <0>;
+		remote-endpoint = <&panel_input>;
+	};
+};
+
+&lradc {
+	vref-supply = <&reg_lradc>;
+	status = "okay";
+
+	button-num-1 {
+		label = "Number_1";
+		linux,code = <KEY_1>;
+		channel = <0>;
+		voltage = <1111111>;
+	};
+
+	button-num-2 {
+		label = "Number_2";
+		linux,code = <KEY_2>;
+		channel = <0>;
+		voltage = <825396>;
+	};
+
+	button-num-3 {
+		label = "Number_3";
+		linux,code = <KEY_3>;
+		channel = <0>;
+		voltage = <444444>;
+	};
+
+	button-num-4 {
+		label = "Number_4";
+		linux,code = <KEY_4>;
+		channel = <0>;
+		voltage = <0>;
+	};
+};
+
+
+
+// &codec {
+// 	allwinner,audio-routing =
+// 		"Headphone", "HP",
+// 		"Headphone", "HPCOM",
+// 		"LINEIN", "Line In",
+// 		"FMINL", "Left FM In",
+// 		"FMINR", "Right FM In",
+// 		"MIC", "Mic";
+// 	status = "okay";
+// };
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pd_pins>;
+	status = "okay";
+};
+
+// &csi0 {
+// 	pinctrl-names = "default";
+// 	pinctrl-0 = <&csi0_pins>;
+// 	packed-format;
+// 	status = "okay";
+
+// 	port {
+// 		csi0_ep: endpoint {
+// 			remote-endpoint = <&ov2640_ep>;
+// 			bus-width = <8>;
+// 			hsync-active = <0>;
+// 			vsync-active = <0>;
+// 			pclk-sample = <1>;
+// 		};
+// 	};
+// };

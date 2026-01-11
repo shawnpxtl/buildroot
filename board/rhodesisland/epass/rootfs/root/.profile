@@ -22,15 +22,14 @@ wait_any_key(){
 }
 
 randomly_start_prts_last_call(){
-    RANDOM_NUM=$((RANDOM % 5))
-    echo "......"
+    RANDOM_NUM=$((RANDOM % 10))
     if [ $RANDOM_NUM -eq 0 ]; then
         prts_last_call
+        echo "........."
+        sleep 3
+        clear
+        echo "Signal Lost...."
     fi
-    echo "........."
-    sleep 3
-    clear
-    echo "Signal Lost...."
 }
 
 # if epass_drm_app is not present

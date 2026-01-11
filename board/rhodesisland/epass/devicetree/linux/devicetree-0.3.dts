@@ -541,7 +541,6 @@
 &usb_otg {
 	dr_mode = "otg"; /* otg host peripheral */
 	status = "okay";
-	srgn,usb-hs-enabled;
 };
 
 &usbphy {
@@ -595,12 +594,6 @@
 	vref-supply = <&reg_lradc>;
 	status = "okay";
 
-	button-num-0 {
-		label = "Number_0";
-		linux,code = <KEY_0>;
-		channel = <0>;
-		voltage = <1481481>;
-	};
 
 	button-num-1 {
 		label = "Number_1";
