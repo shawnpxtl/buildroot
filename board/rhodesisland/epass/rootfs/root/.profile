@@ -14,7 +14,7 @@ wait_any_key(){
         read -n1
         CURRENT_TIME=$(date +%s)
         ELAPSED_TIME=$((CURRENT_TIME - LAST_TIME))
-        if [ $ELAPSED_TIME -ge 5 ]; then
+        if [ $ELAPSED_TIME -ge 3 ]; then
             echo "Triggered!"
             break
         fi
@@ -30,6 +30,20 @@ randomly_start_prts_last_call(){
         clear
         echo "Signal Lost...."
     fi
+}
+
+drain_stdin() {
+    LAST_TIME=$(date +%s)
+    echo "Draining stdin buffer..."
+    while true; do
+        read -n 1 -t 1
+        CURRENT_TIME=$(date +%s)
+        ELAPSED_TIME=$((CURRENT_TIME - LAST_TIME))
+        if [ $ELAPSED_TIME -ge 3 ]; then
+            echo "Done."
+            break
+        fi
+    done
 }
 
 # if epass_drm_app is not present
@@ -106,16 +120,25 @@ mount_ret=$?
 
 if [ $mount_ret -eq 0 ]; then
     echo "SD Card Mounted!"
+    touch /tmp/sd_mounted
+else
+    echo "No SD Card Found."
+    rm -f /tmp/sd_mounted
 fi
 
 while true; do
     chmod +x ./epass_drm_app
-    ./epass_drm_app > /dev/null
+    if [ -f /tmp/sd_mounted ]; then
+        ./epass_drm_app sd > /dev/null
+    else
+        ./epass_drm_app > /dev/null
+    fi
     epass_ret=$?
     if [ $epass_ret -eq 1 ]; then
         echo "Restarting..."
         sleep 2
     elif [ $epass_ret -eq 2 ]; then
+        drain_stdin
         clear
         echo "Request application start..."
         chmod +x /tmp/appstart
@@ -126,6 +149,12 @@ while true; do
         randomly_start_prts_last_call
         poweroff
         return
+    elif [ $epass_ret -eq 4 ]; then
+        drain_stdin
+        clear
+        format_sd
+        wait_any_key
+        echo "Restarting..."
     else
         break
     fi
@@ -135,5 +164,3 @@ done
 # if anything happens, switch to MTP mode for file transfer
 usbctl mtp
 wait_any_key
-
-reboot

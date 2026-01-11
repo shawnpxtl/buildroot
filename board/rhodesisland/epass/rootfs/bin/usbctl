@@ -54,8 +54,11 @@ mtp_start() {
     mkdir /dev/ffs-mtp
     mount -t functionfs mtp /dev/ffs-mtp
 
-
-    cp /etc/umtprd/umtprd_nosd.conf /etc/umtprd/umtprd.conf
+    if [ -f /tmp/sd_mounted ]; then
+        cp /etc/umtprd/umtprd_sd.conf /etc/umtprd/umtprd.conf
+    else
+        cp /etc/umtprd/umtprd_nosd.conf /etc/umtprd/umtprd.conf
+    fi
 
     start-stop-daemon -S -q -m -b -p /var/run/umtprd.pid -x /usr/sbin/umtprd
     sleep 1
