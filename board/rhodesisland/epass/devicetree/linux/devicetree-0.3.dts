@@ -648,6 +648,12 @@
 		interrupt-parent = <&pio>;
 		interrupts = <4 2 IRQ_TYPE_EDGE_FALLING>;/*(PE2)*/
 	};
+
+	cardkb:cardkb@5f {
+		compatible = "m5stack,cardkb";
+		reg = <0x5f>;
+		polling-interval = <50>;
+	};
 };
 
 // &csi0 {

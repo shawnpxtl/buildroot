@@ -629,6 +629,12 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c0_pd_pins>;
 	status = "okay";
+
+	cardkb:cardkb@5f {
+		compatible = "m5stack,cardkb";
+		reg = <0x5f>;
+		polling-interval = <50>;
+	};
 };
 
 // &csi0 {
