@@ -46,6 +46,23 @@ drain_stdin() {
     done
 }
 
+remount_sd(){
+    umount /sd > /dev/null 2>&1
+    umount /dev/mmcblk0p1 > /dev/null 2>&1
+
+    mkdir /sd > /dev/null 2>&1
+    mount /dev/mmcblk0p1 /sd
+    mount_ret=$?
+
+    if [ $mount_ret -eq 0 ]; then
+        echo "SD Card Mounted!"
+        touch /tmp/sd_mounted
+    else
+        echo "No SD Card Found."
+        rm -f /tmp/sd_mounted
+    fi
+}
+
 # if epass_drm_app is not present
 if [ ! -f "./epass_drm_app" ]; then
     cat << EOF
@@ -64,28 +81,7 @@ EOF
     return
 fi
 
-cat << EOF
-                      *
-                     -.:@
-                    :.-..*
-                   :.:.:..%
-                 #..:   ...+
-                %..:........#
-               *..%@:=@+:%%. =
-              *. -@@##@%%@@= .+
-             -.  =@@@@@@@@@+   :
-            -... -%#+*#@@@%- .:.:
-           -...   .%@@@@@%.   ...:@
-          :.:.    :@@@@@@@-    ...:%
-        @:..     .#@@@@@@@%.     ...#
-       #:...     -@%=%@@@#%-     ....+
-      #....   ..-+-:-*@@@@@#-..    ...+
-     +...    .=@#..@@@@@@@@@@@-.    ...=
-    *.... .::-------------------::.. .:.=
-   -...=..-=--+-.=::#:=.+-::-*-=*.-..=...:
-  *.......................................-
-
-EOF
+cat logo.txt
 cat << EOF
 ---------------------------------------------
      RHODES ISLAND AUTHORIZATION PASS
@@ -114,17 +110,7 @@ chmod +x ./epass_drm_app
 ./epass_drm_app version
 cat /etc/os-release
 
-mkdir /sd
-mount /dev/mmcblk0p1 /sd
-mount_ret=$?
 
-if [ $mount_ret -eq 0 ]; then
-    echo "SD Card Mounted!"
-    touch /tmp/sd_mounted
-else
-    echo "No SD Card Found."
-    rm -f /tmp/sd_mounted
-fi
 
 while true; do
     chmod +x ./epass_drm_app
@@ -135,6 +121,7 @@ while true; do
     fi
     epass_ret=$?
     if [ $epass_ret -eq 1 ]; then
+        remount_sd
         echo "Restarting..."
         sleep 2
     elif [ $epass_ret -eq 2 ]; then
@@ -153,6 +140,13 @@ while true; do
         drain_stdin
         clear
         format_sd
+        wait_any_key
+        echo "Restarting..."
+    elif [ $epass_ret -eq 5 ]; then
+        drain_stdin
+        clear
+        mount_boot
+        srgn_config
         wait_any_key
         echo "Restarting..."
     else

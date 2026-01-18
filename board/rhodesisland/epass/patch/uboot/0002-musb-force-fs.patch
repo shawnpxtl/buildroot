@@ -1,0 +1,56 @@
+diff --git a/drivers/usb/musb-new/musb_core.c b/drivers/usb/musb-new/musb_core.c
+index add6b6c3..e7798d32 100644
+--- a/drivers/usb/musb-new/musb_core.c
++++ b/drivers/usb/musb-new/musb_core.c
+@@ -922,7 +922,7 @@ int musb_start(struct musb *musb)
+ 
+ 	/* put into basic highspeed mode and start session */
+ 	musb_writeb(regs, MUSB_POWER, MUSB_POWER_ISOUPDATE
+-						| MUSB_POWER_HSENAB
++						// | MUSB_POWER_HSENAB
+ 						/* ENSUSPEND wedges tusb */
+ 						/* | MUSB_POWER_ENSUSPEND */
+ 						);
+diff --git a/drivers/usb/musb-new/musb_gadget.c b/drivers/usb/musb-new/musb_gadget.c
+index 8ba98d8c..359622da 100644
+--- a/drivers/usb/musb-new/musb_gadget.c
++++ b/drivers/usb/musb-new/musb_gadget.c
+@@ -8,6 +8,7 @@
+  * Copyright (C) 2009 MontaVista Software, Inc. <source@mvista.com>
+  */
+ 
++
+ #ifndef __UBOOT__
+ #include <log.h>
+ #include <dm/device_compat.h>
+@@ -1680,6 +1681,7 @@ static int musb_gadget_wakeup(struct usb_gadget *gadget)
+ 
+ 	power = musb_readb(mregs, MUSB_POWER);
+ 	power |= MUSB_POWER_RESUME;
++	power &= ~MUSB_POWER_HSENAB;
+ 	musb_writeb(mregs, MUSB_POWER, power);
+ 	dev_dbg(musb->controller, "issue wakeup\n");
+ 
+@@ -1688,6 +1690,7 @@ static int musb_gadget_wakeup(struct usb_gadget *gadget)
+ 
+ 	power = musb_readb(mregs, MUSB_POWER);
+ 	power &= ~MUSB_POWER_RESUME;
++	power &= ~MUSB_POWER_HSENAB;
+ 	musb_writeb(mregs, MUSB_POWER, power);
+ done:
+ 	spin_unlock_irqrestore(&musb->lock, flags);
+diff --git a/drivers/usb/musb/musb_core.c b/drivers/usb/musb/musb_core.c
+index 147b2eb9..cd91aa43 100644
+--- a/drivers/usb/musb/musb_core.c
++++ b/drivers/usb/musb/musb_core.c
+@@ -31,7 +31,9 @@ void musb_start(void)
+ 	writeb(0, &musbr->testmode);
+ 
+ 	/* put into basic highspeed mode and start session */
+-	writeb(MUSB_POWER_HSENAB, &musbr->power);
++	// writeb(MUSB_POWER_HSENAB, &musbr->power);
++	&musbr->power &= ~MUSB_POWER_HSENAB;
++	
+ #if defined(CONFIG_USB_MUSB_HCD)
+ 	/* Program PHY to use EXT VBUS if required */
+ 	if (musb_cfg.extvbus == 1) {
