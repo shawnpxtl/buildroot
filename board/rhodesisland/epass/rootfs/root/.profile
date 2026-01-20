@@ -63,6 +63,8 @@ remount_sd(){
     fi
 }
 
+remount_sd
+
 # if epass_drm_app is not present
 if [ ! -f "./epass_drm_app" ]; then
     cat << EOF
