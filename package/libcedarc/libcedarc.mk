@@ -72,6 +72,7 @@ endif
 
 ifeq ($(BR2_PACKAGE_LIBCEDARC_ENCODER),y)
 	LIBCEDARC_INSTALL_TARGET_CMDS += cp '$(@D)/library/$(LIBCEDARC_ARCHLIB)/libvencoder.so' '$(TARGET_DIR)/usr/lib/';
+	LIBCEDARC_INSTALL_TARGET_CMDS += cp '$(@D)/library/$(LIBCEDARC_ARCHLIB)/libvencoder.so' '$(HOST_DIR)/arm-buildroot-linux-gnueabi/sysroot/lib/';
 endif
 
 ifneq ($(BR2_PACKAGE_LIBCEDARC_OPENMAX),y)
