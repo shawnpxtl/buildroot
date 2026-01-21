@@ -51,7 +51,7 @@ remount_sd(){
     umount /dev/mmcblk0p1 > /dev/null 2>&1
 
     mkdir /sd > /dev/null 2>&1
-    mount /dev/mmcblk0p1 /sd
+    mount -o iocharset=utf8 /dev/mmcblk0p1 /sd
     mount_ret=$?
 
     if [ $mount_ret -eq 0 ]; then
