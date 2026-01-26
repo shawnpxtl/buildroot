@@ -6,7 +6,7 @@
 
 
 EPASS_DRM_APP_VERSION = a2.5.0-rc1
-EPASS_DRM_APP_SITE = https://github.com/rhodesepass/drm_app_neo.git
+EPASS_DRM_APP_SITE = https://github.com/shawnpxtl/drm_app_neo.git
 EPASS_DRM_APP_SITE_METHOD = git
 EPASS_DRM_APP_DEPENDENCIES = libcedarx libcedarc libdrm libpng libevdev jpeg-turbo
 EPASS_DRM_APP_GIT_SUBMODULES = YES
