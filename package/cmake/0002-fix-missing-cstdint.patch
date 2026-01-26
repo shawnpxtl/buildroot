@@ -1,0 +1,10 @@
+--- a/Source/cmWorkerPool.h
++++ b/Source/cmWorkerPool.h
+@@ -3,6 +3,7 @@
+ #ifndef cmWorkerPool_h
+ #define cmWorkerPool_h
+ 
++#include <cstdint>
+ #include <functional>
+ #include <memory>
+ #include <string>
