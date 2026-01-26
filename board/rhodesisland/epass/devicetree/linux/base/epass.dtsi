@@ -134,7 +134,7 @@
 		#size-cells = <1>;
 		compatible = "spi-nand";
 		reg = <0>;
-		spi-max-frequency = <100000000>;
+		spi-max-frequency = <80000000>;
 		status = "okay";
 
 		partitions {
@@ -167,7 +167,7 @@
 	status = "disabled";
 	spidev@0 {
 	   compatible = "rohm,dh2228fv";	/* Same as "spidev" but without errors at boot. Search "buggy DT" to understand */
-	   spi-max-frequency = <100000000>;
+	   spi-max-frequency = <80000000>;
 	   reg = <0>;
 	};
 };

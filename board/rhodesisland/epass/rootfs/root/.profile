@@ -158,5 +158,5 @@ done
 
 
 # if anything happens, switch to MTP mode for file transfer
-usbctl mtp
-wait_any_key
+# usbctl mtp
+# wait_any_key
