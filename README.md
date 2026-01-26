@@ -1,5 +1,7 @@
 # 明日方舟 电子通行证 Buildroot SDK
 
+提示：该分支为修复0.3.1以及相近版本电池报错的临时维护版本，因此刷入后电池无法显示，尤其注意！！！
+
 基于aodzip老师的buildroot-tiny200 发行版，更改rootfs文件系统为UBIFS，更新上游U-boot，并进行硬件解码相关的修补。
 
 本buildroot是“三合一”buildroot，可以生成Kernel、U-boot、rootfs。
